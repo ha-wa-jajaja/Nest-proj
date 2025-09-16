@@ -1,0 +1,36 @@
+version: '3.5'
+
+services:
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=nest_proj_db  
+    container_name: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nest-app
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/your_app_db
+    ports:
+      - '3000:3000'
+      - '5555:5555'  # For Prisma Studio
+    depends_on:
+      - db
+    volumes:
+      - ./src:/app/src  # Hot reload for source
+      - ./prisma:/app/prisma  # Hot reload for schema changes
+      - /app/node_modules  # Prevent overwriting node_modules
+    command: sh -c "npx prisma db push && npm run start:dev"
+
+volumes:
+  postgres_data:
